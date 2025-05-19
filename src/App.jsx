@@ -4,6 +4,7 @@ import { ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import LandingPage from './components/LandingPage';
 import CreateTrip from './create-trip';
+import ViewTrip from './view-trip';
 import ProtectedRoute from './components/ProtectedRoute';
 import './App.css';
 
@@ -26,6 +27,11 @@ function App() {
         <Route path="/create-trip" element={
           <ProtectedRoute>
             <CreateTrip />
+          </ProtectedRoute>
+        } />
+        <Route path="/view-trip" element={
+          <ProtectedRoute>
+            <ViewTrip />
           </ProtectedRoute>
         } />
       </Routes>

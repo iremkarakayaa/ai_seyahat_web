@@ -1,9 +1,16 @@
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { toast } from 'react-toastify';
 import './styles.css';
+import { generateTripPlan } from '../services/geminiService';
 
 function CreateTrip() {
   const [selectedBudget, setSelectedBudget] = useState('');
   const [selectedTravelGroup, setSelectedTravelGroup] = useState('');
+  const [destination, setDestination] = useState('');
+  const [days, setDays] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
+  const navigate = useNavigate();
 
   const budgetOptions = [
     {
@@ -53,6 +60,77 @@ function CreateTrip() {
     }
   ];
 
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    
+    // Form doğrulama
+    if (!destination) {
+      toast.error('Lütfen bir destinasyon seçin');
+      return;
+    }
+    
+    if (!days || days < 1) {
+      toast.error('Lütfen geçerli bir gün sayısı girin');
+      return;
+    }
+    
+    if (!selectedBudget) {
+      toast.error('Lütfen bir bütçe seçeneği seçin');
+      return;
+    }
+    
+    if (!selectedTravelGroup) {
+      toast.error('Lütfen bir seyahat grubu seçin');
+      return;
+    }
+    
+    setIsLoading(true);
+    
+    // Gemini AI için prompt oluştur
+    const selectedBudgetOption = budgetOptions.find(option => option.type === selectedBudget);
+    const selectedGroupOption = travelGroupOptions.find(option => option.type === selectedTravelGroup);
+    
+    const prompt = `${days} günlük ${destination} seyahati için detaylı bir gezi planı oluştur. 
+    Bütçe: ${selectedBudgetOption.title} (${selectedBudgetOption.description})
+    Seyahat grubu: ${selectedGroupOption.title} (${selectedGroupOption.description})
+    
+    Her gün için ayrı ayrı plan oluştur ve şunları içersin:
+    - Sabah aktiviteleri
+    - Öğle yemeği önerileri
+    - Öğleden sonra aktiviteleri
+    - Akşam yemeği önerileri
+    - Gece aktiviteleri
+    - Konaklama önerileri
+    - Ulaşım tavsiyeleri
+    
+    Lütfen her gün için ayrı başlıklar kullan ve yerel kültürü yansıtan öneriler sun.`;
+    
+    try {
+      // Gemini API'yi çağır
+      const tripPlan = await generateTripPlan(prompt);
+      
+      // Planı localStorage'a kaydet
+      localStorage.setItem('tripPlan', JSON.stringify({
+        destination,
+        days,
+        budget: selectedBudgetOption.title,
+        travelGroup: selectedGroupOption.title,
+        plan: tripPlan,
+        createdAt: new Date().toISOString()
+      }));
+      
+      toast.success('Seyahat planınız başarıyla oluşturuldu!');
+      
+      // Görüntüleme sayfasına yönlendir
+      navigate('/view-trip');
+    } catch (error) {
+      console.error('Plan oluşturma hatası:', error);
+      toast.error('Seyahat planı oluşturulurken bir hata oluştu. Lütfen tekrar deneyin.');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   return (
     <div className="create-trip-container">
       <nav className="navbar">
@@ -72,15 +150,24 @@ function CreateTrip() {
           </p>
         </div>
 
-        <form className="trip-form">
+        <form className="trip-form" onSubmit={handleSubmit}>
           <div className="form-group">
             <label htmlFor="destination">Nereyi ziyaret etmek istersiniz?</label>
-            <select id="destination" defaultValue="">
+            <select 
+              id="destination" 
+              value={destination}
+              onChange={(e) => setDestination(e.target.value)}
+              required
+            >
               <option value="" disabled>Seçiniz...</option>
-              <option value="paris">Paris, Fransa</option>
-              <option value="tokyo">Tokyo, Japonya</option>
-              <option value="istanbul">İstanbul, Türkiye</option>
-              <option value="newyork">New York, ABD</option>
+              <option value="Paris, Fransa">Paris, Fransa</option>
+              <option value="Tokyo, Japonya">Tokyo, Japonya</option>
+              <option value="İstanbul, Türkiye">İstanbul, Türkiye</option>
+              <option value="New York, ABD">New York, ABD</option>
+              <option value="Roma, İtalya">Roma, İtalya</option>
+              <option value="Barselona, İspanya">Barselona, İspanya</option>
+              <option value="Amsterdam, Hollanda">Amsterdam, Hollanda</option>
+              <option value="Dubai, BAE">Dubai, BAE</option>
             </select>
           </div>
 
@@ -92,6 +179,9 @@ function CreateTrip() {
               placeholder="Örn. 3"
               min="1"
               max="30"
+              value={days}
+              onChange={(e) => setDays(e.target.value)}
+              required
             />
           </div>
 
@@ -131,8 +221,12 @@ function CreateTrip() {
             </div>
           </div>
 
-          <button type="submit" className="submit-btn">
-            Seyahat Planımı Oluştur
+          <button 
+            type="submit" 
+            className="submit-btn"
+            disabled={isLoading}
+          >
+            {isLoading ? 'Plan Oluşturuluyor...' : 'Seyahat Planımı Oluştur'}
           </button>
         </form>
       </main>

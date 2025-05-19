@@ -99,23 +99,25 @@ const SignupModal = ({ isOpen, onClose, onSuccess, onSwitchToLogin }) => {
         throw firestoreError; // Hatayı yukarı ilet
       }
   
-      // Önce alert ile test edelim
-      alert('Kayıt başarılı! Giriş yapabilirsiniz.');
-  
+      // Alert kaldırıldı - sadece toast kullanılacak
+      
       // Toast bildirimi göster
-      toast.success('Kayıt başarılı! Giriş yapabilirsiniz.');
+      toast.success('Kayıt işleminiz başarıyla tamamlandı! Giriş yapabilirsiniz.');
       console.log('Toast bildirimi gönderildi');
   
       // Modal'ı kapat
       onClose();
   
-      // Giriş ekranına yönlendir
-      if (typeof onSwitchToLogin === 'function') {
-        console.log('Giriş ekranına yönlendiriliyor...');
-        onSwitchToLogin();
-      } else {
-        console.log('onSwitchToLogin fonksiyonu bulunamadı');
-      }
+      // Kısa bir gecikme ekleyerek modalın düzgün kapanmasını sağla
+      setTimeout(() => {
+        // Giriş ekranına yönlendir
+        if (typeof onSwitchToLogin === 'function') {
+          console.log('Giriş ekranına yönlendiriliyor...');
+          onSwitchToLogin();
+        } else {
+          console.log('onSwitchToLogin fonksiyonu bulunamadı');
+        }
+      }, 500); // Gecikmeyi biraz artırdık
   
     } catch (error) {
       console.error('Kayıt hatası:', error);

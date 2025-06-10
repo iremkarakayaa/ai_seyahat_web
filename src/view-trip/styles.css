@@ -97,46 +97,192 @@
   padding: 2rem;
 }
 
+/* Plan içeriği için geliştirilmiş stiller */
 .plan-content {
+  font-family: 'Roboto', 'Segoe UI', Arial, sans-serif;
   line-height: 1.6;
   color: #333;
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 2.5rem;
+  padding: 1rem;
 }
 
-.plan-content h1 {
-  font-size: 1.8rem;
-  margin: 1.5rem 0 1rem;
+.plan-title {
+  font-size: 2.2rem;
+  font-weight: 700;
   color: #FF6B00;
+  margin-bottom: 1.5rem;
+  text-align: center;
 }
 
-.plan-content h2 {
+.day-section {
+  margin-bottom: 0;
+  padding: 2.5rem;
+  background-color: #fff;
+  border-radius: 16px;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+  border-top: 8px solid #FF6B00;
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+  position: relative;
+  overflow: hidden;
+}
+
+.day-section::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(135deg, rgba(255, 107, 0, 0.05) 0%, rgba(255, 255, 255, 0) 50%);
+  z-index: 0;
+}
+
+.day-section > * {
+  position: relative;
+  z-index: 1;
+}
+
+.day-section:hover {
+  transform: translateY(-8px);
+  box-shadow: 0 15px 30px rgba(0, 0, 0, 0.15);
+}
+
+.day-title {
+  font-size: 2rem;
+  font-weight: 800;
+  color: #FF6B00;
+  margin-bottom: 2rem;
+  padding-bottom: 1rem;
+  border-bottom: 2px solid #f0f0f0;
+  text-align: center;
+  position: relative;
+}
+
+.day-title::after {
+  content: "";
+  position: absolute;
+  bottom: -2px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 100px;
+  height: 3px;
+  background-color: #FF6B00;
+}
+
+.section-title {
+  font-size: 1.7rem;
+  font-weight: 700;
+  color: #444;
+  margin: 2rem 0 1.2rem;
+  padding-left: 1rem;
+  border-left: 4px solid #FF6B00;
+  background-color: #f9f9f9;
+  padding: 0.8rem 1rem;
+  border-radius: 0 8px 8px 0;
+}
+
+.subsection-title {
+  font-size: 1.4rem;
+  font-weight: 600;
+  color: #555;
+  margin: 1.8rem 0 1rem;
+  padding-bottom: 0.5rem;
+  border-bottom: 1px dashed #ddd;
+}
+
+.item-title {
+  font-size: 1.2rem;
+  font-weight: 600;
+  color: #666;
+  margin: 1.5rem 0 0.8rem;
+  display: flex;
+  align-items: center;
+}
+
+.item-title::before {
+  content: "•";
+  color: #FF6B00;
   font-size: 1.5rem;
-  margin: 1.5rem 0 1rem;
-  color: #FF6B00;
+  margin-right: 0.5rem;
 }
 
-.plan-content h3 {
-  font-size: 1.25rem;
-  margin: 1.2rem 0 0.8rem;
-  color: #333;
-}
-
-.plan-content h4 {
+.plan-paragraph {
   font-size: 1.1rem;
-  margin: 1rem 0 0.6rem;
-  color: #333;
+  margin-bottom: 1.5rem;
+  line-height: 1.8;
 }
 
-.plan-content p {
+.plan-list {
+  margin: 1.2rem 0 1.8rem 1.5rem;
+  background-color: #f9f9f9;
+  padding: 1.2rem 1.5rem;
+  border-radius: 8px;
+}
+
+.plan-list li {
   margin-bottom: 1rem;
+  position: relative;
+  padding-left: 1rem;
+  font-size: 1.1rem;
 }
 
-.plan-content ul {
-  margin-bottom: 1rem;
-  padding-left: 1.5rem;
+.plan-list li::before {
+  content: "";
+  position: absolute;
+  left: -1rem;
+  top: 0.7rem;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background-color: #FF6B00;
 }
 
-.plan-content li {
-  margin-bottom: 0.5rem;
+@media (min-width: 992px) {
+  .plan-content {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media print {
+  .navbar, .trip-actions {
+    display: none;
+  }
+  
+  .trip-content {
+    padding: 0;
+  }
+  
+  .day-section {
+    page-break-inside: avoid;
+    break-inside: avoid;
+    box-shadow: none;
+    border-left: 2px solid #FF6B00;
+  }
+}
+
+@media (max-width: 768px) {
+  .day-section {
+    padding: 1rem;
+    margin-bottom: 1.5rem;
+  }
+  
+  .day-title {
+    font-size: 1.5rem;
+  }
+  
+  .section-title {
+    font-size: 1.3rem;
+  }
+  
+  .subsection-title {
+    font-size: 1.1rem;
+  }
+  
+  .item-title {
+    font-size: 1rem;
+  }
 }
 
 .trip-actions {
@@ -253,5 +399,51 @@
   .action-btn {
     width: 100%;
     justify-content: center;
+  }
+}
+
+/* Seyahatlerime Dön butonu için geliştirilmiş stil */
+.back-to-trips-btn {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  background: #f8f8f8;
+  color: #333;
+  padding: 0.6rem 1.2rem;
+  border-radius: 8px;
+  border: 1px solid #e0e0e0;
+  font-size: 0.9rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+}
+
+.back-to-trips-btn:hover {
+  background: #f0f0f0;
+  border-color: #ccc;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+.back-to-trips-btn:active {
+  transform: translateY(0);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+}
+
+.back-to-trips-btn i {
+  font-size: 0.8rem;
+  transition: transform 0.2s ease;
+}
+
+.back-to-trips-btn:hover i {
+  transform: translateX(-3px);
+}
+
+/* Mobil cihazlar için uyumluluk */
+@media (max-width: 768px) {
+  .back-to-trips-btn {
+    padding: 0.5rem 1rem;
+    font-size: 0.8rem;
   }
 }

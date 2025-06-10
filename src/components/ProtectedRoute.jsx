@@ -1,10 +1,20 @@
 import React from 'react';
 import { Navigate } from 'react-router-dom';
-import { auth } from '../firebase/config';
+import { useAuth } from '../context/AuthContext';
 
 const ProtectedRoute = ({ children }) => {
-  if (!auth.currentUser) {
-    // Kullanıcı giriş yapmamışsa ana sayfaya yönlendir
+  const { loading, isAuthenticated } = useAuth();
+
+  if (loading) {
+    return (
+      <div className="loading-container">
+        <div className="loading-spinner"></div>
+        <p>Yükleniyor...</p>
+      </div>
+    );
+  }
+
+  if (!isAuthenticated) {
     return <Navigate to="/" replace />;
   }
 

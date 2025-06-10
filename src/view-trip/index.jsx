@@ -1,30 +1,61 @@
 import React, { useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom';
+import { toast } from 'react-toastify';
 import './styles.css';
+import { getUserTrips, deleteTrip, saveTripPlan } from '../services/tripService';
 
 function ViewTrip() {
   const [tripData, setTripData] = useState(null);
+  const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
+  const { tripId } = useParams();
 
   useEffect(() => {
-    // LocalStorage'dan seyahat planını al
-    const storedTripPlan = localStorage.getItem('tripPlan');
-    
-    if (storedTripPlan) {
+    const fetchTripData = async () => {
+      setLoading(true);
       try {
-        const parsedData = JSON.parse(storedTripPlan);
-        setTripData(parsedData);
+        // Firebase kodu kaldırıldı, sadece localStorage kullanılıyor
+        const storedTripPlan = localStorage.getItem('tripPlan');
+        if (storedTripPlan) {
+          setTripData(JSON.parse(storedTripPlan));
+        } else {
+          navigate('/my-trips');
+        }
       } catch (error) {
         console.error('Seyahat planı yüklenirken hata:', error);
+      } finally {
+        setLoading(false);
       }
-    } else {
-      // Plan yoksa create-trip sayfasına yönlendir
-      navigate('/create-trip');
-    }
-  }, [navigate]);
+    };
+
+    fetchTripData();
+  }, [tripId, navigate]);
+
+  const handleBackToTrips = () => {
+    navigate('/my-trips');
+  };
 
   const handleNewTrip = () => {
     navigate('/create-trip');
+  };
+
+  // MongoDB'ye kaydetme fonksiyonu düzeltildi
+  const handleSaveTrip = async () => {
+    try {
+      // MongoDB'ye kaydetme işlemi
+      const tripDataForSave = {
+        planText: tripData.plan,
+        userPrompt: `${tripData.days} günlük ${tripData.destination} seyahati - ${tripData.budget} bütçe - ${tripData.travelGroup}`
+      };
+      
+      await saveTripPlan(tripDataForSave);
+      
+      // Başarılı kaydın ardından seyahat listesine yönlendir
+      navigate('/my-trips');
+    } catch (error) {
+      console.error('Seyahat kaydedilirken hata:', error);
+      toast.error('Seyahat kaydedilirken bir hata oluştu');
+    }
   };
 
   if (!tripData) {
@@ -36,27 +67,65 @@ function ViewTrip() {
     );
   }
 
-  // Markdown formatındaki metni HTML'e dönüştürmek için basit bir fonksiyon
+  // Markdown formatındaki metni HTML'e dönüştürmek için geliştirilmiş fonksiyon
   const formatPlanText = (text) => {
+    if (!text) return '';
+    
+    // Günleri ayır
+    const dayRegex = /## Gün (\d+)/g;
+    let formattedText = text;
+    
+    // Gün başlıklarını özel div'lerle çevrele
+    formattedText = formattedText.replace(dayRegex, '<div class="day-section"><h2 class="day-title">Gün $1</h2>');
+    
+    // Her günün sonuna div kapatma ekle
+    const dayMatches = [...text.matchAll(dayRegex)];
+    
+    if (dayMatches.length > 0) {
+      let lastIndex = 0;
+      let result = '';
+      
+      for (let i = 0; i < dayMatches.length; i++) {
+        const match = dayMatches[i];
+        const startIndex = match.index;
+        
+        if (i > 0) {
+          // Önceki günün içeriğini al ve div ile kapat
+          const prevContent = text.substring(lastIndex, startIndex);
+          result += prevContent + '</div>';
+        }
+        
+        // Yeni günün başlangıcını ekle
+        result += '<div class="day-section"><h2 class="day-title">Gün ' + (i + 1) + '</h2>';
+        lastIndex = startIndex + match[0].length;
+      }
+      
+      // Son günün içeriğini ekle
+      result += text.substring(lastIndex) + '</div>';
+      formattedText = result;
+    }
+    
     // Başlıkları formatla
-    let formattedText = text
-      .replace(/# (.*)/g, '<h1>$1</h1>')
-      .replace(/## (.*)/g, '<h2>$1</h2>')
-      .replace(/### (.*)/g, '<h3>$1</h3>')
-      .replace(/#### (.*)/g, '<h4>$1</h4>');
+    formattedText = formattedText
+      .replace(/# (.*)/g, '<h1 class="plan-title">$1</h1>')
+      .replace(/## (.*)/g, '<h2 class="section-title">$1</h2>')
+      .replace(/### (.*)/g, '<h3 class="subsection-title">$3</h3>')
+      .replace(/#### (.*)/g, '<h4 class="item-title">$1</h4>');
     
     // Madde işaretlerini formatla
     formattedText = formattedText.replace(/- (.*)/g, '<li>$1</li>');
-    formattedText = formattedText.replace(/<li>(.*)<\/li>/g, '<ul><li>$1</li></ul>');
-    formattedText = formattedText.replace(/<\/ul><ul>/g, '');
+    formattedText = formattedText.replace(/<li>(.*)<\/li>/g, '<ul class="plan-list"><li>$1</li></ul>');
+    formattedText = formattedText.replace(/<\/ul><ul class="plan-list">/g, '');
     
     // Paragrafları formatla
-    formattedText = formattedText.replace(/\n\n/g, '</p><p>');
-    formattedText = `<p>${formattedText}</p>`;
-    formattedText = formattedText.replace(/<p><h([1-4])>/g, '<h$1>');
+    formattedText = formattedText.replace(/\n\n/g, '</p><p class="plan-paragraph">');
+    formattedText = `<p class="plan-paragraph">${formattedText}</p>`;
+    formattedText = formattedText.replace(/<p class="plan-paragraph"><h([1-4])/g, '<h$1');
     formattedText = formattedText.replace(/<\/h([1-4])><\/p>/g, '</h$1>');
-    formattedText = formattedText.replace(/<p><ul>/g, '<ul>');
+    formattedText = formattedText.replace(/<p class="plan-paragraph"><ul/g, '<ul');
     formattedText = formattedText.replace(/<\/ul><\/p>/g, '</ul>');
+    formattedText = formattedText.replace(/<p class="plan-paragraph"><div/g, '<div');
+    formattedText = formattedText.replace(/<\/div><\/p>/g, '</div>');
     
     return formattedText;
   };
@@ -64,11 +133,10 @@ function ViewTrip() {
   return (
     <div className="view-trip-container">
       <nav className="navbar">
-        <div className="logo-container">
-          <div className="logo-circle">LP</div>
-          <span className="logo-text">Logoipsum</span>
-        </div>
-        <button className="new-trip-btn" onClick={handleNewTrip}>Yeni Seyahat Planı</button>
+        {/* Logo kaldırıldı */}
+        <button className="back-to-trips-btn" onClick={handleBackToTrips}>
+          <i className="fas fa-arrow-left"></i> Seyahatlerime Dön
+        </button>
       </nav>
 
       <main className="trip-content">
@@ -101,10 +169,7 @@ function ViewTrip() {
           <button className="action-btn print-btn" onClick={() => window.print()}>
             <span className="btn-icon">🖨️</span> Yazdır
           </button>
-          <button className="action-btn share-btn">
-            <span className="btn-icon">🔗</span> Paylaş
-          </button>
-          <button className="action-btn save-btn">
+          <button className="action-btn save-btn" onClick={handleSaveTrip}>
             <span className="btn-icon">💾</span> Kaydet
           </button>
         </div>

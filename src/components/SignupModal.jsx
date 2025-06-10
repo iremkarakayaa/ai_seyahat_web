@@ -1,13 +1,12 @@
 import React, { useState } from 'react';
 import './LoginModal.css'; // Aynı stilleri kullanacağız
 import { toast } from 'react-toastify';
-import { auth, db } from '../firebase/config';
-import { createUserWithEmailAndPassword, updateProfile } from 'firebase/auth';
-import { doc, setDoc } from 'firebase/firestore';
 import { useNavigate } from 'react-router-dom';
+import { useAuth } from '../context/AuthContext';
 
 const SignupModal = ({ isOpen, onClose, onSuccess, onSwitchToLogin }) => {
   const navigate = useNavigate();
+  const { register } = useAuth();
   const [showPassword, setShowPassword] = useState(false);
   const [formData, setFormData] = useState({
     fullName: '',
@@ -69,85 +68,37 @@ const SignupModal = ({ isOpen, onClose, onSuccess, onSwitchToLogin }) => {
     try {
       console.log('Kayıt işlemi başlatılıyor...', formData.email);
       
-      // Firebase Authentication'da kullanıcı oluştur
-      const userCredential = await createUserWithEmailAndPassword(
-        auth,
-        formData.email,
-        formData.password
-      );
+      // MongoDB API'sine kayıt işlemi
+      const result = await register(formData.fullName, formData.email, formData.password);
   
-      console.log('Kullanıcı oluşturuldu:', userCredential.user.uid);
-  
-      // Kullanıcı profilini güncelle
-      await updateProfile(userCredential.user, {
-        displayName: formData.fullName
-      });
-  
-      console.log('Profil güncellendi');
-  
-      // Firestore'a kullanıcı bilgilerini kaydet
-      try {
-        await setDoc(doc(db, 'users', userCredential.user.uid), {
-          fullName: formData.fullName,
-          email: formData.email,
-          createdAt: new Date().toISOString(),
-          platform: 'web'
-        });
-        console.log('Firestore\'a kullanıcı bilgileri kaydedildi');
-      } catch (firestoreError) {
-        console.error('Firestore kayıt hatası:', firestoreError);
-        throw firestoreError; // Hatayı yukarı ilet
+      if (result.success) {
+        console.log('Kullanıcı oluşturuldu:', result.data._id);
+        
+        // Toast bildirimi göster
+        toast.success('Kayıt işleminiz başarıyla tamamlandı! Giriş yapabilirsiniz.');
+        console.log('Toast bildirimi gönderildi');
+    
+        // Modal'ı kapat
+        onClose();
+    
+        // Kısa bir gecikme ekleyerek modalın düzgün kapanmasını sağla
+        setTimeout(() => {
+          // Giriş ekranına yönlendir
+          if (typeof onSwitchToLogin === 'function') {
+            console.log('Giriş ekranına yönlendiriliyor...');
+            onSwitchToLogin();
+          } else {
+            console.log('onSwitchToLogin fonksiyonu bulunamadı');
+          }
+        }, 500); // Gecikmeyi biraz artırdık
+      } else {
+        toast.error(result.error);
       }
-  
-      // Alert kaldırıldı - sadece toast kullanılacak
-      
-      // Toast bildirimi göster
-      toast.success('Kayıt işleminiz başarıyla tamamlandı! Giriş yapabilirsiniz.');
-      console.log('Toast bildirimi gönderildi');
-  
-      // Modal'ı kapat
-      onClose();
-  
-      // Kısa bir gecikme ekleyerek modalın düzgün kapanmasını sağla
-      setTimeout(() => {
-        // Giriş ekranına yönlendir
-        if (typeof onSwitchToLogin === 'function') {
-          console.log('Giriş ekranına yönlendiriliyor...');
-          onSwitchToLogin();
-        } else {
-          console.log('onSwitchToLogin fonksiyonu bulunamadı');
-        }
-      }, 500); // Gecikmeyi biraz artırdık
-  
     } catch (error) {
       console.error('Kayıt hatası:', error);
-      console.error('Hata kodu:', error.code);
       console.error('Hata mesajı:', error.message);
       
-      let errorMessage = 'Kayıt olurken bir hata oluştu.';
-      
-      switch (error.code) {
-        case 'auth/email-already-in-use':
-          errorMessage = 'Bu e-posta adresi zaten kullanımda.';
-          break;
-        case 'auth/invalid-email':
-          errorMessage = 'Geçersiz e-posta adresi.';
-          break;
-        case 'auth/operation-not-allowed':
-          errorMessage = 'E-posta/parola girişi devre dışı bırakılmış.';
-          break;
-        case 'auth/weak-password':
-          errorMessage = 'Parola çok zayıf. En az 6 karakter kullanın.';
-          break;
-        case 'auth/network-request-failed':
-          errorMessage = 'İnternet bağlantınızı kontrol edin.';
-          break;
-        default:
-          errorMessage = `Kayıt olurken bir hata oluştu: ${error.message}`;
-          break;
-      }
-      
-      toast.error(errorMessage);
+      toast.error('Kayıt olurken bir hata oluştu.');
     } finally {
       setLoading(false);
     }

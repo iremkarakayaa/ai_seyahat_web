@@ -1,9 +1,8 @@
 import React, { useState } from 'react';
 import './LoginModal.css';
 import { toast } from 'react-toastify';
-import { auth } from '../firebase/config';
-import { signInWithEmailAndPassword } from 'firebase/auth';
 import { useNavigate } from 'react-router-dom';
+import { useAuth } from '../context/AuthContext';
 
 const LoginModal = ({ isOpen, onClose, onSuccess, onSwitchToSignup }) => {
   const [showPassword, setShowPassword] = useState(false);
@@ -13,6 +12,7 @@ const LoginModal = ({ isOpen, onClose, onSuccess, onSwitchToSignup }) => {
   });
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
+  const { login } = useAuth();
   
   if (!isOpen) return null;
 
@@ -35,36 +35,34 @@ const LoginModal = ({ isOpen, onClose, onSuccess, onSwitchToSignup }) => {
     setLoading(true);
 
     try {
-      const userCredential = await signInWithEmailAndPassword(
-        auth,
-        formData.email,
-        formData.password
-      );
+      const result = await login(formData.email, formData.password);
 
-      console.log('Giriş başarılı:', userCredential.user);
-      toast.success('Giriş başarılı!');
-      
-      // Modal'ı kapat
-      onClose();
-      
-      // Başarılı giriş callback'i varsa çağır
-      if (typeof onSuccess === 'function') {
-        onSuccess();
+      if (result.success) {
+        console.log('Giriş başarılı:', result.data);
+        toast.success('Giriş başarılı!');
+        
+        // Modal'ı kapat
+        onClose();
+        
+        // Başarılı giriş callback'i varsa çağır
+        if (typeof onSuccess === 'function') {
+          onSuccess();
+        } else {
+          // Callback yoksa doğrudan yönlendir
+          navigate('/create-trip');
+        }
       } else {
-        // Callback yoksa doğrudan yönlendir
-        navigate('/create-trip');
+        toast.error(result.error);
+        
+        // Form verilerini sıfırla
+        setFormData({
+          email: '',
+          password: ''
+        });
       }
     } catch (error) {
       console.error('Giriş hatası:', error);
-      
-      // Tüm hata durumlarında aynı mesajı göster
       toast.error('E-posta veya şifre hatalı');
-      
-      // Form verilerini sıfırla
-      setFormData({
-        email: '',
-        password: ''
-      });
     } finally {
       setLoading(false);
     }

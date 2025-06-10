@@ -1,16 +1,93 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'react-toastify';
 import './styles.css';
 import { generateTripPlan } from '../services/geminiService';
+// Google Maps ile ilgili importları kaldırıyoruz
+// import { searchPlaces, getPlaceDetails, searchHotels, getMapsApiKey } from '../services/api';
+// import { useLoadScript, GoogleMap, Marker } from '@react-google-maps/api';
 
 function CreateTrip() {
   const [selectedBudget, setSelectedBudget] = useState('');
   const [selectedTravelGroup, setSelectedTravelGroup] = useState('');
   const [destination, setDestination] = useState('');
+  // Arama sonuçları ve seçilen yer state'lerini kaldırıyoruz
+  // const [searchResults, setSearchResults] = useState([]);
+  // const [selectedPlace, setSelectedPlace] = useState(null);
   const [days, setDays] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  // Maps ve otellerle ilgili state'leri kaldırıyoruz
+  // const [hotels, setHotels] = useState([]);
+  // const [mapsApiKey, setMapsApiKey] = useState('');
+  // const [mapsLoaded, setMapsLoaded] = useState(false);
+  // const [mapsError, setMapsError] = useState(null);
+  // const [isInitializing, setIsInitializing] = useState(true);
+  // const [loadRetries, setLoadRetries] = useState(0);
+  // const MAX_RETRIES = 3;
   const navigate = useNavigate();
+
+  // Önceden tanımlanmış destinasyon seçenekleri
+  const destinationOptions = [
+    {
+      id: 1,
+      name: 'İstanbul',
+      country: 'Türkiye',
+      description: 'Tarihi yarımada, Boğaz manzarası ve zengin kültürüyle',
+      image: '🏙️'
+    },
+    {
+      id: 2,
+      name: 'Antalya',
+      country: 'Türkiye',
+      description: 'Muhteşem plajları ve antik kentleriyle',
+      image: '🏖️'
+    },
+    {
+      id: 3,
+      name: 'Kapadokya',
+      country: 'Türkiye',
+      description: 'Peri bacaları ve sıcak hava balonlarıyla',
+      image: '🎈'
+    },
+    {
+      id: 4,
+      name: 'Paris',
+      country: 'Fransa',
+      description: 'Romantizm, sanat ve moda şehri',
+      image: '🗼'
+    },
+    {
+      id: 5,
+      name: 'Roma',
+      country: 'İtalya',
+      description: 'Antik tarih ve İtalyan mutfağıyla',
+      image: '🏛️'
+    },
+    {
+      id: 6,
+      name: 'Barselona',
+      country: 'İspanya',
+      description: 'Gaudi mimarisi ve Akdeniz sahilleriyle',
+      image: '🏝️'
+    },
+    {
+      id: 7,
+      name: 'Amsterdam',
+      country: 'Hollanda',
+      description: 'Kanallar, bisikletler ve müzelerle dolu',
+      image: '🚲'
+    },
+    {
+      id: 8,
+      name: 'Prag',
+      country: 'Çek Cumhuriyeti',
+      description: 'Masalsı mimarisi ve tarihi atmosferiyle',
+      image: '🏰'
+    }
+  ];
+
+  // API ve Maps ile ilgili fonksiyonları kaldırıyoruz
+  // ...
 
   const budgetOptions = [
     {
@@ -60,10 +137,14 @@ function CreateTrip() {
     }
   ];
 
+  // Destinasyon seçme fonksiyonu
+  const handleDestinationSelect = (selectedDestination) => {
+    setDestination(selectedDestination);
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     
-    // Form doğrulama
     if (!destination) {
       toast.error('Lütfen bir destinasyon seçin');
       return;
@@ -86,11 +167,10 @@ function CreateTrip() {
     
     setIsLoading(true);
     
-    // Gemini AI için prompt oluştur
     const selectedBudgetOption = budgetOptions.find(option => option.type === selectedBudget);
     const selectedGroupOption = travelGroupOptions.find(option => option.type === selectedTravelGroup);
     
-    const prompt = `${days} günlük ${destination} seyahati için detaylı bir gezi planı oluştur. 
+    const prompt = `${days} günlük ${destination.name}, ${destination.country} seyahati için detaylı bir gezi planı oluştur. 
     Bütçe: ${selectedBudgetOption.title} (${selectedBudgetOption.description})
     Seyahat grubu: ${selectedGroupOption.title} (${selectedGroupOption.description})
     
@@ -106,22 +186,22 @@ function CreateTrip() {
     Lütfen her gün için ayrı başlıklar kullan ve yerel kültürü yansıtan öneriler sun.`;
     
     try {
-      // Gemini API'yi çağır
       const tripPlan = await generateTripPlan(prompt);
       
-      // Planı localStorage'a kaydet
-      localStorage.setItem('tripPlan', JSON.stringify({
-        destination,
+      const tripData = {
+        destination: destination.country 
+          ? `${destination.name}, ${destination.country}` 
+          : destination.name,
         days,
         budget: selectedBudgetOption.title,
         travelGroup: selectedGroupOption.title,
         plan: tripPlan,
         createdAt: new Date().toISOString()
-      }));
+      };
+      
+      localStorage.setItem('tripPlan', JSON.stringify(tripData));
       
       toast.success('Seyahat planınız başarıyla oluşturuldu!');
-      
-      // Görüntüleme sayfasına yönlendir
       navigate('/view-trip');
     } catch (error) {
       console.error('Plan oluşturma hatası:', error);
@@ -133,14 +213,8 @@ function CreateTrip() {
 
   return (
     <div className="create-trip-container">
-      <nav className="navbar">
-        <div className="logo-container">
-          <div className="logo-circle">LP</div>
-          <span className="logo-text">Logoipsum</span>
-        </div>
-        <button className="sign-in-btn">Giriş Yap</button>
-      </nav>
-
+      {/* Navbar kaldırıldı */}
+    
       <main className="main-content">
         <div className="header-section">
           <h1>Seyahat tercihlerinizi öğrenelim 🏕️🌴</h1>
@@ -149,26 +223,28 @@ function CreateTrip() {
             tercihlerinize göre özelleştirilmiş bir gezi planı oluştursun.
           </p>
         </div>
-
+    
         <form className="trip-form" onSubmit={handleSubmit}>
-          <div className="form-group">
-            <label htmlFor="destination">Nereyi ziyaret etmek istersiniz?</label>
-            <select 
-              id="destination" 
-              value={destination}
-              onChange={(e) => setDestination(e.target.value)}
+          {/* Form içeriği devam ediyor */}
+          <div className="form-group destination-group">
+            <label>Nereyi ziyaret etmek istersiniz?</label>
+            <input 
+              type="text" 
+              placeholder="Örn. İstanbul, Türkiye"
+              value={destination.name ? (destination.country ? `${destination.name}, ${destination.country}` : destination.name) : ''}
+              onChange={(e) => {
+                const value = e.target.value;
+                // Doğrudan girilen değeri kullan, virgül işlemini yapma
+                setDestination({
+                  id: 'custom',
+                  name: value, // Virgül dahil tüm değeri name olarak kaydet
+                  country: '',  // Ülke alanını temizle
+                  description: '',
+                  image: '🌍'
+                });
+              }}
               required
-            >
-              <option value="" disabled>Seçiniz...</option>
-              <option value="Paris, Fransa">Paris, Fransa</option>
-              <option value="Tokyo, Japonya">Tokyo, Japonya</option>
-              <option value="İstanbul, Türkiye">İstanbul, Türkiye</option>
-              <option value="New York, ABD">New York, ABD</option>
-              <option value="Roma, İtalya">Roma, İtalya</option>
-              <option value="Barselona, İspanya">Barselona, İspanya</option>
-              <option value="Amsterdam, Hollanda">Amsterdam, Hollanda</option>
-              <option value="Dubai, BAE">Dubai, BAE</option>
-            </select>
+            />
           </div>
 
           <div className="form-group">

@@ -3,7 +3,6 @@ import { useNavigate } from 'react-router-dom';
 import './LandingPage.css';
 import LoginModal from './LoginModal';
 import SignupModal from './SignupModal';
-import { auth } from '../firebase/config'; // Firebase auth'u import edin
 
 const LandingPage = () => {
   const [showLoginModal, setShowLoginModal] = useState(false);
@@ -136,7 +135,7 @@ const LandingPage = () => {
           onClose={handleCloseModals}
           onSuccess={() => {
             handleCloseModals();
-            navigate('/create-trip');
+            navigate('/my-trips');
           }}
           onSwitchToSignup={() => {
             setShowLoginModal(false);
@@ -151,7 +150,7 @@ const LandingPage = () => {
           onClose={handleCloseModals}
           onSuccess={() => {
             handleCloseModals();
-            navigate('/create-trip');
+            navigate('/my-trips');
           }}
           onSwitchToLogin={() => {
             setShowSignupModal(false);
